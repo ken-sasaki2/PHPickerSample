@@ -11,34 +11,32 @@ import PhotosUI
 final class ViewController: UIViewController {
 
     @IBOutlet weak var imageView: UIImageView!
-    private var picker: PHPickerViewController?
-    private var configuration = PHPickerConfiguration(photoLibrary: PHPhotoLibrary.shared())
+    
     private var selection = [String: PHPickerResult]()
     private var selectedAssetIdentifiers = [String]()
     private var selectedAssetIdentifierIterator: IndexingIterator<[String]>?
-    private var identifier = ""
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setUp()
+        
     }
     
-    private func setUp() {
-        configuration.filter = nil
+    private func presentPicker() {
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.filter = .any(of: [.images, .livePhotos, .videos])
         configuration.preferredAssetRepresentationMode = .current
         configuration.selection = .ordered
         configuration.selectionLimit = 0
         configuration.preselectedAssetIdentifiers = selectedAssetIdentifiers
         
-        picker = PHPickerViewController(configuration: configuration)
-        picker?.delegate = self
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        
+        present(picker, animated: true)
     }
     
     @IBAction func onOpenButtonTapped(_ sender: UIButton) {
-        guard let picker = picker else {
-            return
-        }
-        present(picker, animated: true)
+        presentPicker()
     }
 }
 
@@ -60,9 +58,8 @@ extension ViewController: PHPickerViewControllerDelegate {
         selectedAssetIdentifiers = results.map(\.assetIdentifier!)
         selectedAssetIdentifierIterator = selectedAssetIdentifiers.makeIterator()
         
-        
-        print("kenken", selectedAssetIdentifiers)
-        print("kenken", selectedAssetIdentifierIterator)
+        print("didFinishPicking:", selectedAssetIdentifiers)
+        print("didFinishPicking:", selectedAssetIdentifierIterator)
         
         dismiss(animated: true)
     }
