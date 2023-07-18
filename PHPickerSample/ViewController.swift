@@ -15,6 +15,7 @@ final class ViewController: UIViewController {
     private var selection = [String: PHPickerResult]()
     private var selectedAssetIdentifiers = [String]()
     private var selectedAssetIdentifierIterator: IndexingIterator<[String]>?
+    private var currentAssetIdentifier: String?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,6 +36,33 @@ final class ViewController: UIViewController {
         present(picker, animated: true)
     }
     
+    private func showImage() {
+        guard let assetIdentifier = selectedAssetIdentifierIterator?.next() else {
+            return
+        }
+        currentAssetIdentifier = assetIdentifier
+        guard let selection = selection[assetIdentifier] else {
+            return
+        }
+        let itemProvider = selection.itemProvider
+        
+        if itemProvider.canLoadObject(ofClass: UIImage.self) {
+            itemProvider.loadObject(ofClass: UIImage.self) { image, error in
+                DispatchQueue.main.async {
+                    self.handleCompletion(assetIdentifier, object: image, error: error)
+                }
+            }
+        }
+    }
+    
+    func handleCompletion(_ assetIdentifier: String, object: Any?, error: Error? = nil) {
+        guard currentAssetIdentifier == assetIdentifier else {
+            return
+        }
+        let image = object as? UIImage
+        imageView.image = image
+    }
+    
     @IBAction func onOpenButtonTapped(_ sender: UIButton) {
         presentPicker()
     }
@@ -43,15 +71,19 @@ final class ViewController: UIViewController {
 extension ViewController: PHPickerViewControllerDelegate {
     
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        let existingSelection = self.selection
+        dismiss(animated: true)
+        
+        let existingSelection = selection
         var newSelection = [String: PHPickerResult]()
 
         results.forEach { result in
             guard let identifier = result.assetIdentifier else {
                 return
             }
-            newSelection[identifier] = existingSelection[identifier]
+            newSelection[identifier] = existingSelection[identifier] ?? result
         }
+        
+        print("kenken",  newSelection)
         
         // Track the selection in case the user deselects it later.
         selection = newSelection
@@ -61,7 +93,7 @@ extension ViewController: PHPickerViewControllerDelegate {
         print("didFinishPicking:", selectedAssetIdentifiers)
         print("didFinishPicking:", selectedAssetIdentifierIterator)
         
-        dismiss(animated: true)
+        showImage()
     }
 }
  
