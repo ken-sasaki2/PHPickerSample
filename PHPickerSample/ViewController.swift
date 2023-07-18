@@ -36,7 +36,7 @@ final class ViewController: UIViewController {
         present(picker, animated: true)
     }
     
-    private func showImage() {
+    private func loadImageData() {
         guard let assetIdentifier = selectedAssetIdentifierIterator?.next() else {
             return
         }
@@ -49,13 +49,13 @@ final class ViewController: UIViewController {
         if itemProvider.canLoadObject(ofClass: UIImage.self) {
             itemProvider.loadObject(ofClass: UIImage.self) { image, error in
                 DispatchQueue.main.async {
-                    self.handleCompletion(assetIdentifier, object: image, error: error)
+                    self.showImage(assetIdentifier, object: image, error: error)
                 }
             }
         }
     }
     
-    func handleCompletion(_ assetIdentifier: String, object: Any?, error: Error? = nil) {
+    func showImage(_ assetIdentifier: String, object: Any?, error: Error? = nil) {
         guard currentAssetIdentifier == assetIdentifier else {
             return
         }
@@ -83,8 +83,6 @@ extension ViewController: PHPickerViewControllerDelegate {
             newSelection[identifier] = existingSelection[identifier] ?? result
         }
         
-        print("kenken",  newSelection)
-        
         // Track the selection in case the user deselects it later.
         selection = newSelection
         selectedAssetIdentifiers = results.map(\.assetIdentifier!)
@@ -93,7 +91,7 @@ extension ViewController: PHPickerViewControllerDelegate {
         print("didFinishPicking:", selectedAssetIdentifiers)
         print("didFinishPicking:", selectedAssetIdentifierIterator)
         
-        showImage()
+        loadImageData()
     }
 }
  
