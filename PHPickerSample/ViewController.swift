@@ -11,6 +11,7 @@ import PhotosUI
 final class ViewController: UIViewController {
 
     @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var tableView: UITableView!
     
     private var selection = [String: PHPickerResult]()
     private var selectedAssetIdentifiers = [String]()
@@ -19,7 +20,14 @@ final class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        setUpTableView()
+    }
+
+    private func setUpTableView() {
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.allowsMultipleSelection = false
+        tableView.register(UINib(nibName: "TableViewCell", bundle: nil), forCellReuseIdentifier: "cell")
     }
     
     private func presentPicker() {
@@ -89,9 +97,20 @@ extension ViewController: PHPickerViewControllerDelegate {
         selectedAssetIdentifierIterator = selectedAssetIdentifiers.makeIterator()
         
         print("didFinishPicking:", selectedAssetIdentifiers)
-        print("didFinishPicking:", selectedAssetIdentifierIterator)
+        print("didFinishPicking:", selectedAssetIdentifierIterator as Any)
         
         loadImageData()
     }
 }
- 
+
+extension ViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! TableViewCell        
+        return cell
+    }
+}
