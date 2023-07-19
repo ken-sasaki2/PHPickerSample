@@ -10,13 +10,13 @@ import PhotosUI
 
 final class ViewController: UIViewController {
 
-    @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var tableView: UITableView!
     
     private var selection = [String: PHPickerResult]()
     private var selectedAssetIdentifiers = [String]()
     private var selectedAssetIdentifierIterator: IndexingIterator<[String]>?
     private var currentAssetIdentifier: String?
+    private var images: [UIImage] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,6 +26,7 @@ final class ViewController: UIViewController {
     private func setUpTableView() {
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.separatorStyle = .none
         tableView.allowsMultipleSelection = false
         tableView.register(UINib(nibName: "TableViewCell", bundle: nil), forCellReuseIdentifier: "cell")
     }
@@ -67,8 +68,11 @@ final class ViewController: UIViewController {
         guard currentAssetIdentifier == assetIdentifier else {
             return
         }
-        let image = object as? UIImage
-        imageView.image = image
+        guard let image = object as? UIImage else {
+            return
+        }
+        images.append(image)
+        tableView.reloadData()
     }
     
     @IBAction func onOpenButtonTapped(_ sender: UIButton) {
@@ -106,11 +110,16 @@ extension ViewController: PHPickerViewControllerDelegate {
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return images.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! TableViewCell        
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! TableViewCell
+        cell.photo.image = images[indexPath.row]
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath as IndexPath, animated: true)
     }
 }
