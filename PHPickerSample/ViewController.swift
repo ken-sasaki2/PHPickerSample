@@ -39,6 +39,9 @@ final class ViewController: UIViewController {
         let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = self
         
+        if let sheet = picker.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+        }
         present(picker, animated: true)
     }
     
