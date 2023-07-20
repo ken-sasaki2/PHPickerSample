@@ -14,9 +14,7 @@ final class ViewController: UIViewController {
     
     private var selection = [String: PHPickerResult]()
     private var selectedAssetIdentifiers = [String]()
-    private var selectedAssetIdentifierIterator: IndexingIterator<[String]>?
-    private var currentAssetIdentifier: String?
-    private var images: [UIImage] = []
+    private var images: [UIImage?] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,7 +35,6 @@ final class ViewController: UIViewController {
         configuration.preferredAssetRepresentationMode = .current
         configuration.selection = .ordered
         configuration.selectionLimit = 0
-        configuration.preselectedAssetIdentifiers = selectedAssetIdentifiers
         
         let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = self
@@ -46,33 +43,21 @@ final class ViewController: UIViewController {
     }
     
     private func loadImageData() {
-        guard let assetIdentifier = selectedAssetIdentifierIterator?.next() else {
-            return
-        }
-        currentAssetIdentifier = assetIdentifier
-        guard let selection = selection[assetIdentifier] else {
-            return
-        }
-        let itemProvider = selection.itemProvider
-        
-        if itemProvider.canLoadObject(ofClass: UIImage.self) {
-            itemProvider.loadObject(ofClass: UIImage.self) { image, error in
-                DispatchQueue.main.async {
-                    self.showImage(assetIdentifier, object: image, error: error)
+        selectedAssetIdentifiers.forEach { identifier in
+            guard let selection = selection[identifier] else {
+                return
+            }
+            let itemProvider = selection.itemProvider
+            
+            if itemProvider.canLoadObject(ofClass: UIImage.self) {
+                itemProvider.loadObject(ofClass: UIImage.self) { image, error in
+                    DispatchQueue.main.async {
+                        self.images.append(image as? UIImage)
+                        self.tableView.reloadData()
+                    }
                 }
             }
         }
-    }
-    
-    func showImage(_ assetIdentifier: String, object: Any?, error: Error? = nil) {
-        guard currentAssetIdentifier == assetIdentifier else {
-            return
-        }
-        guard let image = object as? UIImage else {
-            return
-        }
-        images.append(image)
-        tableView.reloadData()
     }
     
     @IBAction func onOpenButtonTapped(_ sender: UIButton) {
@@ -98,10 +83,8 @@ extension ViewController: PHPickerViewControllerDelegate {
         // Track the selection in case the user deselects it later.
         selection = newSelection
         selectedAssetIdentifiers = results.map(\.assetIdentifier!)
-        selectedAssetIdentifierIterator = selectedAssetIdentifiers.makeIterator()
         
         print("didFinishPicking:", selectedAssetIdentifiers)
-        print("didFinishPicking:", selectedAssetIdentifierIterator as Any)
         
         loadImageData()
     }
@@ -116,6 +99,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! TableViewCell
         cell.photo.image = images[indexPath.row]
+        
         return cell
     }
     
